@@ -255,17 +255,21 @@ class LibvirtdState(MachineState):
         assert self.vm_id
         if self._is_running():
             self.log_start("shutting down... ")
-            self.dom.destroy()
+            if self.dom.destroy() != 0:
+                self.log("Failed destroying machine")
         else:
             self.log("not running")
         self.state = self.STOPPED
 
     def destroy(self, wipe=False):
+
         if not self.vm_id:
             return True
         self.log_start("destroying... ")
         self.stop()
-        self.dom.undefine()
+        if self.dom.undefine() != 0:
+            self.log("Failed undefining domain")
+
         if (self.disk_path and os.path.exists(self.disk_path)):
             os.unlink(self.disk_path)
         return True
