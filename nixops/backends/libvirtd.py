@@ -30,6 +30,7 @@ class LibvirtdDefinition(MachineDefinition):
     def __init__(self, xml, config):
         MachineDefinition.__init__(self, xml, config)
 
+        print("%r" % xml)
         x = xml.find("attrs/attr[@name='libvirtd']/attrs")
         assert x is not None
         self.vcpu = x.find("attr[@name='vcpu']/int").get("value")
@@ -40,7 +41,7 @@ class LibvirtdDefinition(MachineDefinition):
         self.image_dir = x.find("attr[@name='imageDir']/string").get("value")
         assert self.image_dir is not None
         self.domain_type = x.find("attr[@name='domainType']/string").get("value")
-        self.kernel = x.find("attr[@name='kernel']/string").get("value")
+        self.kernel = x.find("attr[@name='kernel']/path").get("value")
         self.initrd = x.find("attr[@name='initrd']/string").get("value")
         self.cmdline = x.find("attr[@name='cmdline']/string").get("value")
 

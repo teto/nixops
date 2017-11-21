@@ -126,8 +126,8 @@ in
     };
 
     deployment.libvirtd.kernel = mkOption {
-      default = "";
-      type = types.str;
+      default = null;
+      type = with types; nullOr path;
       description = "Specify the kernel we want to launch (valid for kvm)";
     };
   };
