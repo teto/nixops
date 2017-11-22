@@ -30,7 +30,6 @@ class LibvirtdDefinition(MachineDefinition):
     def __init__(self, xml, config):
         MachineDefinition.__init__(self, xml, config)
 
-        print("%r" % xml)
         x = xml.find("attrs/attr[@name='libvirtd']/attrs")
         assert x is not None
         self.vcpu = x.find("attr[@name='vcpu']/int").get("value")
@@ -232,6 +231,7 @@ class LibvirtdState(MachineState):
 
     def _wait_for_ip(self, prev_time):
         self.log_start("waiting for IP address to appear in DHCP leases...")
+        # TODO timeout here
         while True:
             ip = self._parse_ip()
             if ip:
@@ -257,7 +257,8 @@ class LibvirtdState(MachineState):
             self.private_ipv4 = self._parse_ip()
         else:
             self.log("starting...")
-            self.dom.create()
+            res = self.dom.create()
+            print(res)
             self._wait_for_ip(0)
 
     def get_ssh_name(self):
