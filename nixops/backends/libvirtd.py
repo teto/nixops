@@ -177,8 +177,8 @@ class LibvirtdState(MachineState):
                 '    <type arch="x86_64">hvm</type>',
                 # '    <boot dev="hd"/>',
                 "    <kernel>%s</kernel>" % defn.kernel or '',
-                "    <initrd>%s</initrd>" % defn.initrd or '',
-                "    <cmdline>%s</cmdline>"% defn.cmdline or '' ,
+                "    <initrd>%s</initrd>" % defn.initrd if len(defn.kernel) > 0 else "",
+                "    <cmdline>%s</cmdline>"% defn.cmdline if len(defn.kernel) > 0 else "",
                 '</os>']
 
 
