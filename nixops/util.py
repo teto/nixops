@@ -19,6 +19,7 @@ from StringIO import StringIO
 
 devnull = open(os.devnull, 'rw')
 
+# logger = logging.getLogger('root')
 
 def check_wait(test, initial=10, factor=1, max_tries=60, exception=True):
     """Call function ‘test’ periodically until it returns True or a timeout occurs."""
@@ -53,7 +54,7 @@ def logged_exec(command, logger, check=True, capture_stdout=False, stdin=None,
     functionality as well.
 
     When calling with capture_stdout=True, a string is returned, which contains
-    everything the programm wrote to stdout.
+    everything the program wrote to stdout.
 
     When calling with check=False, the return code isn't checked and the
     function will return an integer which represents the return code of the
@@ -64,6 +65,9 @@ def logged_exec(command, logger, check=True, capture_stdout=False, stdin=None,
     elif stdin is None:
         stdin = devnull
 
+    logger.log("%s" % (' '.join(command)))
+
+    # TODO print command 
     if capture_stdout:
         process = subprocess.Popen(command, env=env, stdin=stdin,
                                    stdout=subprocess.PIPE,

@@ -660,8 +660,9 @@ class Deployment(object):
     def activate_configs(self, configs_path, include, exclude, allow_reboot,
                          force_reboot, check, sync, always_activate, dry_activate):
         """Activate the new configuration on a machine."""
-
+        # m.log("configuration already up to date")
         def worker(m):
+            self.logger.log(ansi_success("{0}> activating config".format(self.name or "unnamed"), outfile=self.logger._log_file)) # , outfile=self.logger._log_file)
             if not should_do(m, include, exclude): return
 
             try:
@@ -669,6 +670,7 @@ class Deployment(object):
                 daemon_var = '' if m.state == m.RESCUE else 'env NIX_REMOTE=daemon '
                 setprof = daemon_var + 'nix-env -p /nix/var/nix/profiles/system --set "{0}"'
                 if always_activate or self.definitions[m.name].always_activate:
+                    self.logger.log("test")
                     m.run_command(setprof.format(m.new_toplevel))
                 else:
                     # Only activate if the profile has changed.
@@ -686,6 +688,7 @@ class Deployment(object):
                     elif ret != 0:
                         raise Exception("unable to set new system profile")
 
+                self.logger.log("send Keys")
                 m.send_keys()
 
                 if force_reboot or m.state == m.RESCUE:
