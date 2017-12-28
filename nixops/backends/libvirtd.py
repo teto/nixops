@@ -88,23 +88,6 @@ class LibvirtdState(MachineState):
                     self.logger.error('make sure qemu-system-x86_64 is installed on the target host')
                 raise Exception('Failed to connect to the hypervisor at {}'.format(self.uri))
         return self._conn
-# ||||||| merged common ancestors
-#     def connect(self):
-#         self.conn = libvirt.open('qemu:///system')
-#         if self.conn is None:
-#             self.log('Failed to open connection to the hypervisor')
-#             sys.exit(1)
-# =======
-#     def connect(self):
-#         self.conn = libvirt.open('qemu:///system')
-#         if self.conn is None:
-#             self.log('Failed to open connection to the hypervisor')
-#             sys.exit(1)
-#         self._dom = None
-#         self._pool = None
-#         self._vol = None
-# >>>>>>> Upload disk image via libvirt API
-
     @property
     def dom(self):
         if self._dom is None:
