@@ -40,6 +40,7 @@ class LibvirtdDefinition(MachineDefinition):
         self.kernel = x.find("attr[@name='kernel']/string").get("value")
         self.initrd = x.find("attr[@name='initrd']/string").get("value")
         self.cmdline = x.find("attr[@name='cmdline']/string").get("value")
+        self.uri = x.find("attr[@name='URI']/string").get("value")
 
         self.networks = [
             k.get("value")
@@ -57,6 +58,7 @@ class LibvirtdState(MachineState):
     disk_path = nixops.util.attr_property("libvirtd.diskPath", None)
     storage_volume_name = nixops.util.attr_property("libvirtd.storageVolumeName", None)
     vcpu = nixops.util.attr_property("libvirtd.vcpu", None)
+    uri = nixops.util.attr_property("libvirtd.URI", None)
 
     @classmethod
     def get_type(cls):
@@ -65,11 +67,20 @@ class LibvirtdState(MachineState):
     def __init__(self, depl, name, id):
         MachineState.__init__(self, depl, name, id)
 
-        self.conn = libvirt.open('qemu:///system')
-        if self.conn is None:
-            self.log('Failed to open connection to the hypervisor')
-            sys.exit(1)
         self._dom = None
+
+    @property
+    def conn(self):
+        try:
+            conn = self._conn
+        except AttributeError:
+            self.log('connecting to {}...'.format(self.uri))
+            conn = libvirt.open(self.uri)
+            if conn is None:
+                self.log('failed to connect to {}'.format(self.uri))
+                sys.exit(1)
+            self._conn = conn
+        return self._conn
 
     @property
     def dom(self):
@@ -128,6 +139,8 @@ class LibvirtdState(MachineState):
         assert isinstance(defn, LibvirtdDefinition)
         self.set_common_state(defn)
         self.primary_net = defn.networks[0]
+        self.uri = defn.uri
+
         if not self.primary_mac:
             self._generate_primary_mac()
         if not self.client_public_key:
