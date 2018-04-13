@@ -18,6 +18,29 @@ from nixops.backends import MachineDefinition, MachineState
 # to prevent libvirt errors from appearing on screen, see
 # https://www.redhat.com/archives/libvirt-users/2017-August/msg00011.html
 
+
+class LibvirtdNetwork:
+
+    INTERFACE_TYPES = {
+        'virtual': 'network',
+        'bridge': 'bridge',
+    }
+
+    def __init__(self, **kwargs):
+        self.type = kwargs['type']
+        self.source = kwargs['source']
+
+    @property
+    def interface_type(self):
+        return self.INTERFACE_TYPES[self.type]
+
+    @classmethod
+    def from_xml(cls, x):
+        type = x.find("attr[@name='type']/string").get("value")
+        source = x.find("attr[@name='source']/string").get("value")
+        return cls(type=type, source=source)
+
+
 class LibvirtdDefinition(MachineDefinition):
     """Definition of a trivial machine."""
 
@@ -43,8 +66,8 @@ class LibvirtdDefinition(MachineDefinition):
         self.uri = x.find("attr[@name='URI']/string").get("value")
 
         self.networks = [
-            k.get("value")
-            for k in x.findall("attr[@name='networks']/list/string")]
+            LibvirtdNetwork.from_xml(n)
+            for n in x.findall("attr[@name='networks']/list/*")]
         assert len(self.networks) > 0
 
 
@@ -52,8 +75,6 @@ class LibvirtdState(MachineState):
     private_ipv4 = nixops.util.attr_property("privateIpv4", None)
     client_public_key = nixops.util.attr_property("libvirtd.clientPublicKey", None)
     client_private_key = nixops.util.attr_property("libvirtd.clientPrivateKey", None)
-    primary_net = nixops.util.attr_property("libvirtd.primaryNet", None)
-    primary_mac = nixops.util.attr_property("libvirtd.primaryMAC", None)
     domain_xml = nixops.util.attr_property("libvirtd.domainXML", None)
     disk_path = nixops.util.attr_property("libvirtd.diskPath", None)
     storage_volume_name = nixops.util.attr_property("libvirtd.storageVolume", None)
@@ -156,7 +177,6 @@ class LibvirtdState(MachineState):
     def create(self, defn, check, allow_reboot, allow_recreate):
         assert isinstance(defn, LibvirtdDefinition)
         self.set_common_state(defn)
-        self.primary_net = defn.networks[0]
         self.storage_pool_name = defn.storage_pool_name
         self.uri = defn.uri
 
@@ -261,19 +281,15 @@ class LibvirtdState(MachineState):
     def _make_domain_xml(self, defn):
         qemu = self._get_qemu_executable()
 
-        def maybe_mac(n):
-            if n == self.primary_net:
-                return '<mac address="' + self.primary_mac + '" />'
-            else:
-                return ""
-
         def iface(n):
             return "\n".join([
-                '    <interface type="network">',
-                maybe_mac(n),
-                '      <source network="{0}"/>',
+                '    <interface type="{interface_type}">',
+                '      <source {interface_type}="{source}"/>',
                 '    </interface>',
-            ]).format(n)
+            ]).format(
+                interface_type=n.interface_type,
+                source=n.source,
+            )
 
         def _make_os(defn):
             return [
@@ -301,6 +317,10 @@ class LibvirtdState(MachineState):
             '    <graphics type="vnc" port="-1" autoport="yes"/>' if not defn.headless else "",
             '    <input type="keyboard" bus="usb"/>',
             '    <input type="mouse" bus="usb"/>',
+            '    <channel type="unix">',
+            '      <target type="virtio" name="org.qemu.guest_agent.0"/>',
+            '      <address type="virtio-serial" controller="0" bus="0" port="1"/>',
+            '    </channel>',
             defn.extra_devices,
             '  </devices>',
             defn.extra_domain,
@@ -320,19 +340,29 @@ class LibvirtdState(MachineState):
         """
         return an ip v4
         """
-        # alternative is VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE if qemu agent is available
-        ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE, 0)
+
+        dom_xml_str = self.dom.XMLDesc(0)
+        xml = ElementTree.fromstring(dom_xml_str)
+        first_iface_mac = xml.find('.//interface[1]/mac').get('address')
+
+        try:
+            ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
+        except libvirt.libvirtError:
+            return
+
         if ifaces is None:
             self.log("Failed to get domain interfaces")
             return
 
-        for (name, val) in ifaces.iteritems():
-            if val['addrs']:
-                for ipaddr in val['addrs']:
-                    return ipaddr['addr']
+        first_iface = next(v for k, v in ifaces.iteritems()
+                           if v.get('hwaddr', None) == first_iface_mac)
+
+        addrs = first_iface.get('addrs', [])
+
+        return addrs[0]['addr']
+
 
     def _wait_for_ip(self, prev_time):
-        self.log_start("waiting for IP address to appear in DHCP leases...")
         while True:
             ip = self._parse_ip()
             if ip:
@@ -352,7 +382,6 @@ class LibvirtdState(MachineState):
     def start(self):
         assert self.vm_id
         assert self.domain_xml
-        assert self.primary_net
         if self._is_running():
             self.log("connecting...")
             self.private_ipv4 = self._parse_ip()
