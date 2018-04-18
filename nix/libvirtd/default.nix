@@ -174,7 +174,7 @@ in
     #   SUBSYSTEM=="virtio-ports", ATTR{name}=="org.qemu.guest_agent.0", TAG+="systemd" ENV{SYSTEMD_WANTS}="qemu-guest-agent.service"
     # '';
 
-    # systemd.services.qemu-guest-agent = {
+    services.qemu-guest-agent.enable = true;
     #   description = "QEMU Guest Agent";
     #   bindsTo = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
     #   after = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
