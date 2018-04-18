@@ -158,7 +158,7 @@ in
 
     fileSystems."/".device = "/dev/disk/by-label/nixos";
 
-    boot.extraKernelParams = [ "earlycon=ttyS0" "console=ttyS0" ];
+    boot.kernelParams = [ "earlycon=ttyS0" "console=ttyS0" ];
 
     boot.loader.grub.version = 2;
     boot.loader.grub.device = "/dev/sda";
@@ -170,20 +170,20 @@ in
 
     deployment.hasFastConnection = true;
 
-    services.udev.extraRules = ''
-      SUBSYSTEM=="virtio-ports", ATTR{name}=="org.qemu.guest_agent.0", TAG+="systemd" ENV{SYSTEMD_WANTS}="qemu-guest-agent.service"
-    '';
+    # services.udev.extraRules = ''
+    #   SUBSYSTEM=="virtio-ports", ATTR{name}=="org.qemu.guest_agent.0", TAG+="systemd" ENV{SYSTEMD_WANTS}="qemu-guest-agent.service"
+    # '';
 
-    systemd.services.qemu-guest-agent = {
-      description = "QEMU Guest Agent";
-      bindsTo = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
-      after = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
-      serviceConfig = {
-        ExecStart = "-${pkgs.kvm}/bin/qemu-ga";
-        Restart = "always";
-        RestartSec = 0;
-      };
-    };
+    # systemd.services.qemu-guest-agent = {
+    #   description = "QEMU Guest Agent";
+    #   bindsTo = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
+    #   after = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
+    #   serviceConfig = {
+    #     ExecStart = "-${pkgs.kvm}/bin/qemu-ga";
+    #     Restart = "always";
+    #     RestartSec = 0;
+    #   };
+    # };
 };
 
 }
