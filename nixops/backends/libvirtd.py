@@ -363,8 +363,8 @@ class LibvirtdState(MachineState):
 
         try:
             ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
-            for i in ifaces:
-                print("ifaces %r " % i)
+            # for i in ifaces:
+            #     print("ifaces %r " % i)
         except libvirt.libvirtError:
             return
 
@@ -375,7 +375,8 @@ class LibvirtdState(MachineState):
         first_iface = next(v for k, v in ifaces.iteritems()
                            if v.get('hwaddr', None) == first_iface_mac)
 
-        print("%r" % first_iface_mac)
+        # print("%r" % first_iface_mac)
+        print("first_iface %r" % first_iface)
         addrs = first_iface.get('addrs', [])
         print("%r" % addrs)
 
