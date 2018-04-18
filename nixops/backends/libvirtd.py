@@ -339,6 +339,7 @@ class LibvirtdState(MachineState):
         dom_xml_str = self.dom.XMLDesc(0)
         xml = ElementTree.fromstring(dom_xml_str)
         first_iface_mac = xml.find('.//interface[1]/mac').get('address')
+        # print("first iface %r" % first_iface_mac)
         print("first iface mac = %r" % first_iface_mac)
 
         try:
@@ -355,7 +356,9 @@ class LibvirtdState(MachineState):
         first_iface = next(v for k, v in ifaces.iteritems()
                            if v.get('hwaddr', None) == first_iface_mac)
 
+        print("%r" % first_iface_mac)
         addrs = first_iface.get('addrs', [])
+        print("%r" % addrs)
 
         return addrs[0]['addr']
 
