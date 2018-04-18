@@ -20,6 +20,8 @@ let
       services.openssh.extraConfig = "UseDNS no";
 
       services.qemu-guest-agent.enable = true;
+
+      networking.networkmanager.enable = true;
     } ];
   }).config;
 
