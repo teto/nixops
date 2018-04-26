@@ -340,7 +340,7 @@ class LibvirtdState(MachineState):
         xml = ElementTree.fromstring(dom_xml_str)
         first_iface_mac = xml.find('.//interface[1]/mac').get('address')
         # print("first iface %r" % first_iface_mac)
-        print("first iface mac = %r" % first_iface_mac)
+        # print("first iface mac = %r" % first_iface_mac)
 
         try:
             ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
@@ -357,11 +357,11 @@ class LibvirtdState(MachineState):
                            if v.get('hwaddr', None) == first_iface_mac)
 
         # print("%r" % first_iface_mac)
-        print("first_iface %r" % first_iface)
+        # print("first_iface %r" % first_iface)
         addrs = first_iface.get('addrs', [])
-        print("%r" % addrs)
+        # print("%r" % addrs)
 
-        return addrs[0]['addr']
+        return addrs[0].get('addr', False)
 
 
     def _wait_for_ip(self, prev_time):
