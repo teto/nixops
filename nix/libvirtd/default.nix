@@ -172,20 +172,7 @@ in
 
     networking.networkmanager.enable = true;
 
-    # services.udev.extraRules = ''
-    #   SUBSYSTEM=="virtio-ports", ATTR{name}=="org.qemu.guest_agent.0", TAG+="systemd" ENV{SYSTEMD_WANTS}="qemu-guest-agent.service"
-    # '';
-
-    services.qemu-guest-agent.enable = true;
-    #   description = "QEMU Guest Agent";
-    #   bindsTo = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
-    #   after = [ "dev-virtio\\x2dports-org.qemu.guest_agent.0.device" ];
-    #   serviceConfig = {
-    #     ExecStart = "-${pkgs.kvm}/bin/qemu-ga";
-    #     Restart = "always";
-    #     RestartSec = 0;
-    #   };
-    # };
+    services.qemuGuest.enable = true;
 };
 
 }
