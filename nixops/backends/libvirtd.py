@@ -381,6 +381,7 @@ class LibvirtdState(MachineState):
         # print("%r" % addrs)
 
         return addrs[0].get('addr', False)
+        # return addrs[0].get('addr', False) if len(addrs) else False
 
 
     def _wait_for_ip(self, prev_time):
