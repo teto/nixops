@@ -106,9 +106,9 @@ class LibvirtdState(MachineState):
         if self._conn is None:
             self.logger.log('Connecting to {}...'.format(self.uri))
             try:
-                print("test")
+                print("conn")
                 self._conn = libvirt.open(self.uri)
-                print("test 2")
+                print("conn 2")
             except libvirt.libvirtError as error:
                 self.logger.error(error.get_error_message())
                 if error.get_error_code() == libvirt.VIR_ERR_NO_CONNECT:
@@ -346,7 +346,8 @@ class LibvirtdState(MachineState):
             ifaces = self.dom.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_AGENT, 0)
             # for i in ifaces:
             #     print("ifaces %r " % i)
-        except libvirt.libvirtError:
+        except libvirt.libvirtError as e:
+            self.log(str(e))
             return
 
         if ifaces is None:
@@ -361,8 +362,8 @@ class LibvirtdState(MachineState):
         addrs = first_iface.get('addrs', [])
         # print("%r" % addrs)
 
-        return addrs[0].get('addr', False)
-        # return addrs[0].get('addr', False) if len(addrs) else False
+        # return addrs[0].get('addr', False)
+        return addrs[0].get('addr', False) if len(addrs) else False
 
 
     def _wait_for_ip(self, prev_time):
