@@ -359,7 +359,7 @@ class LibvirtdState(MachineState):
 
         # print("%r" % first_iface_mac)
         # print("first_iface %r" % first_iface)
-        addrs = first_iface.get('addrs', [])
+        addrs = first_iface.get('addrs') or []
         # print("%r" % addrs)
 
         # return addrs[0].get('addr', False)
