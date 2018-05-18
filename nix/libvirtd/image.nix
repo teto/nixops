@@ -22,6 +22,11 @@ let
       services.qemuGuest.enable = true;
 
       networking.networkmanager.enable = true;
+
+      system.activationScripts.createDevRoot = ''
+        # if does not exist ?!
+        ln -s /dev/sda1 /dev/root
+      '';
     } ];
   }).config;
 
