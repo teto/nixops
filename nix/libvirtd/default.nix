@@ -37,6 +37,14 @@ in
   ###### interface
 
   options = {
+    deployment.libvirtd.imageDir = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = ''
+        Directory to store VM image files. Note that it should be writable both by you and by libvirtd daemon.
+      '';
+    };
+
     deployment.libvirtd.storagePool = mkOption {
       type = types.str;
       default = "default";
