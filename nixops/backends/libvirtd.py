@@ -58,6 +58,9 @@ class LibvirtdDefinition(MachineDefinition):
         self.extra_devices = x.find("attr[@name='extraDevicesXML']/string").get("value")
         self.extra_domain = x.find("attr[@name='extraDomainXML']/string").get("value")
         self.headless = x.find("attr[@name='headless']/bool").get("value") == 'true'
+        self.image_dir = x.find("attr[@name='imageDir']/string")
+        if self.image_dir:
+            self.image_dir = self.image_dir.get("value")
         self.domain_type = x.find("attr[@name='domainType']/string").get("value")
         self.kernel = x.find("attr[@name='kernel']/string").get("value")
         self.initrd = x.find("attr[@name='initrd']/string").get("value")
@@ -202,7 +205,7 @@ class LibvirtdState(MachineState):
             (self.client_private_key, self.client_public_key) = nixops.util.create_key_pair()
 
         if self.storage_volume_name is None:
-            self._prepare_storage_volume()
+            self._prepare_storage_volume(defn)
             self.storage_volume_name = self.vol.name()
 
         self.log("defining xml...")
@@ -224,7 +227,7 @@ class LibvirtdState(MachineState):
         self.start()
         return True
 
-    def _prepare_storage_volume(self):
+    def _prepare_storage_volume(self, defn):
         self.logger.log("preparing disk image...")
         newEnv = copy.deepcopy(os.environ)
         newEnv["NIXOPS_LIBVIRTD_PUBKEY"] = self.client_public_key
@@ -249,14 +252,14 @@ class LibvirtdState(MachineState):
 
         os.system("ls -l %s" % temp_disk_path)
         image_info = self._get_image_info(temp_disk_path)
-        self._vol = self._create_volume(image_info['virtual-size'], image_info['actual-size'])
+        self._vol = self._create_volume(image_info['virtual-size'], image_info['actual-size'], defn.image_dir)
         self._upload_volume(temp_disk_path, image_info['actual-size'])
 
     def _get_image_info(self, filename):
         output = self._logged_exec(["qemu-img", "info", "--output", "json", filename], capture_stdout=True)
         return json.loads(output)
 
-    def _create_volume(self, virtual_size, actual_size):
+    def _create_volume(self, virtual_size, actual_size, path=None):
         xml = '''
         <volume>
           <name>{name}</name>
@@ -264,12 +267,14 @@ class LibvirtdState(MachineState):
           <allocation>{actual_size}</allocation>
           <target>
             <format type="qcow2"/>
+            {eventual_path}
           </target>
         </volume>
         '''.format(
             name="{}.qcow2".format(self._vm_id()),
             virtual_size=virtual_size,
             actual_size=actual_size,
+            eventual_path= "<path >%s</path>" % path if path else ""
         )
         vol = self.pool.createXML(xml)
         self._vol = vol
@@ -313,8 +318,9 @@ class LibvirtdState(MachineState):
                 '    <type arch="x86_64">hvm</type>',
                 "    <kernel>%s</kernel>" % defn.kernel,
                 "    <initrd>%s</initrd>" % defn.initrd if len(defn.kernel) > 0 else "",
-                "    <cmdline>%s</cmdline>" % defn.cmdline if len(defn.kernel) > 0 else "",
+                "    <cmdline>%s</cmdline>"% defn.cmdline if len(defn.kernel) > 0 else "",
                 '</os>']
+
 
         domain_fmt = "\n".join([
             '<domain type="{5}">',
