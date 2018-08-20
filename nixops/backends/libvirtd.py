@@ -219,13 +219,16 @@ class LibvirtdState(MachineState):
             capture_stdout=True, env=newEnv).rstrip()
 
         temp_disk_path = os.path.join(self.depl.tempdir, 'disk-{}.qcow2'.format(self.name))
+        # quand on le copie on peut lui donner des droits plus petits ?
         shutil.copyfile(os.path.join(temp_image_path, 'disk.qcow2'), temp_disk_path)
         # Rebase onto empty backing file to prevent breaking the disk image
         # when the backing file gets garbage collected.
         self._logged_exec(["qemu-img", "rebase", "-f", "qcow2", "-b",
                            "", temp_disk_path])
 
-        self.logger.log("uploading disk image...")
+        self.logger.log("uploading disk image from temp_disk_path=%s..." % temp_disk_path)
+
+        os.system("ls -l %s" % temp_disk_path)
         image_info = self._get_image_info(temp_disk_path)
         self._vol = self._create_volume(image_info['virtual-size'], image_info['actual-size'])
         self._upload_volume(temp_disk_path, image_info['actual-size'])
