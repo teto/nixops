@@ -241,6 +241,10 @@ class LibvirtdState(MachineState):
         return json.loads(output)
 
     def _create_volume(self, virtual_size, actual_size, path=None):
+        # according to https://libvirt.org/formatstorage.html#StoragePoolTarget
+        # files should be created with rights depending on parent folder but 
+        # this doesn't seem true
+        # here I hardcode permission rights (BAD)
         xml = '''
         <volume>
           <name>{name}</name>
@@ -248,6 +252,12 @@ class LibvirtdState(MachineState):
           <allocation>{actual_size}</allocation>
           <target>
             <format type="qcow2"/>
+            <permissions>
+                <owner>1000</owner>
+                <group>100</group>
+                <mode>0744</mode>
+                <label>virt_image_t</label>
+            </permissions>
             {eventual_path}
           </target>
         </volume>
@@ -255,7 +265,8 @@ class LibvirtdState(MachineState):
             name="{}.qcow2".format(self._vm_id()),
             virtual_size=virtual_size,
             actual_size=actual_size,
-            eventual_path= "<path >%s</path>" % path if path else ""
+            # eventual_path= "<path >%s</path>" % path if path else ""
+            eventual_path= ""
         )
         vol = self.pool.createXML(xml)
         self._vol = vol
