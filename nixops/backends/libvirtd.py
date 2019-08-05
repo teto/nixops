@@ -88,6 +88,22 @@ class LibvirtdState(MachineState):
                     self.logger.error('make sure qemu-system-x86_64 is installed on the target host')
                 raise Exception('Failed to connect to the hypervisor at {}'.format(self.uri))
         return self._conn
+# ||||||| merged common ancestors
+#     def connect(self):
+#         self.conn = libvirt.open('qemu:///system')
+#         if self.conn is None:
+#             self.log('Failed to open connection to the hypervisor')
+#             sys.exit(1)
+# =======
+#     def connect(self):
+#         self.conn = libvirt.open('qemu:///system')
+#         if self.conn is None:
+#             self.log('Failed to open connection to the hypervisor')
+#             sys.exit(1)
+#         self._dom = None
+#         self._pool = None
+#         self._vol = None
+# >>>>>>> Upload disk image via libvirt API
 
     @property
     def dom(self):
@@ -153,9 +169,10 @@ class LibvirtdState(MachineState):
         if self.conn.getLibVersion() < 1002007:
             raise Exception('libvirt 1.2.7 or newer is required at the target host')
 
+        self.storage_pool_name = defn.storage_pool_name
+
         if not self.primary_mac:
             self._generate_primary_mac()
-
         if not self.client_public_key:
             (self.client_private_key, self.client_public_key) = nixops.util.create_key_pair()
 
