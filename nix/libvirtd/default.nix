@@ -61,14 +61,6 @@ in
       '';
     };
 
-    deployment.libvirtd.URI = mkOption {
-      type = types.str;
-      default = "qemu:///system";
-      description = ''
-        Connection URI.
-      '';
-    };
-
     deployment.libvirtd.vcpu = mkOption {
       default = 1;
       type = types.int;
