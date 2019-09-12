@@ -65,6 +65,8 @@ def logged_exec(command, logger, check=True, capture_stdout=False, stdin=None,
     elif stdin is None:
         stdin = devnull
 
+    logger.log("with environment NIX_SSHOPTS=%s" % (env.get('NIX_SSHOPTS', 'None') if env else ""))
+    logger.log("Running command %s" % command)
     if capture_stdout:
         process = subprocess.Popen(command, env=env, stdin=stdin,
                                    stdout=subprocess.PIPE,
