@@ -48,9 +48,11 @@ class SSHMaster(object):
                '-oNumberOfPasswordPrompts={0}'.format(pass_prompts),
                '-oServerAliveInterval=60',
                '-oControlPersist=600'] \
-              + (["-C"] if compress else [])
+              + (["-C"] if compress else []) \
+              + ssh_flags
 
-        res = subprocess.call(cmd + ssh_flags, **kwargs)
+        # res = subprocess.call(cmd , **kwargs)
+        res = nixops.util.logged_exec(cmd, logger, **kwargs)
         if res != 0:
             raise SSHConnectionFailed(
                 "unable to start SSH master connection to "
@@ -292,6 +294,7 @@ class SSH(object):
         else:
             check = kwargs.pop('check', True)
             res = subprocess.call(cmd, **kwargs)
+            # res = nixops.util.logged_exec(cmd, self._logger, **kwargs)
             if check and res != 0:
                 msg = "command ‘{0}’ failed on host ‘{1}’"
                 err = msg.format(cmd, self._get_target(user))
